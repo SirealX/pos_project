@@ -1,6 +1,6 @@
 # POS System
 
-A backend-focused Point of Sale system built with Django. Started as a self-directed project after noticing that small local businesses in my area were still running sales on paper or basic spreadsheets I wanted to understand how POS software actually works, from the data model up.
+A backend-focused Point of Sale system built with Django. I started this after repeatedly seeing the same operational gaps at businesses using off-the-shelf POS software for tasks it wasn't really built for — inventory counts drifting out of sync, sales not always registering, no real way to handle staff scheduling from the same tool. The software itself wasn't bad, it just wasn't purpose-built for those specific tasks, and running into it firsthand at two different jobs was what got me to actually sit down and build something myself. I wanted to understand how POS software works from the data model up, not just how to use one.
 
 **Stack:** Python 3.13 · Django 5.2 · SQLite (Postgres-ready) · Tailwind CSS · HTMX · pytest-django
 
