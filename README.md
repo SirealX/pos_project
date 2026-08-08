@@ -1,6 +1,6 @@
 # POS System
 
-A backend-focused Point of Sale system built with Django. Started as a self-directed project after noticing that small local businesses in my area were still running sales on paper or basic spreadsheets — I wanted to understand how POS software actually works, from the data model up.
+A backend-focused Point of Sale system built with Django. Started as a self-directed project after noticing that small local businesses in my area were still running sales on paper or basic spreadsheets I wanted to understand how POS software actually works, from the data model up.
 
 **Stack:** Python 3.13 · Django 5.2 · SQLite (Postgres-ready) · Tailwind CSS · HTMX · pytest-django
 
@@ -21,7 +21,7 @@ A backend-focused Point of Sale system built with Django. Started as a self-dire
 
 ### Service layer over fat views
 
-Business logic lives in `SaleService`, not in views. The `create_from_cart()` method owns the entire checkout transaction — stock locking, validation, line item creation, inventory deduction, and state transitions — in one atomic operation. Views just call the service and handle the HTTP response.
+Business logic lives in `SaleService`, not in views. The `create_from_cart()` method owns the entire checkout transaction — stock locking, validation, line item creation, inventory deduction, and state transitions in one atomic operation. Views just call the service and handle the HTTP response.
 
 ```
 apps/
@@ -81,15 +81,15 @@ The app uses split settings (`config/settings/base.py`, `local.py`, `production.
 
 Create a `.env` file in the project root (gitignored, never committed) with:
 
-| Variable | Required | Default | Notes |
-|---|---|---|---|
-| `SECRET_KEY` | Yes | — | Generate your own; never reuse the one in this README |
-| `DEBUG` | No | `False` | Set `True` for local development |
-| `DATABASE_URL` | No | SQLite (`db.sqlite3`) | Set to a `postgres://` URL to run against Postgres |
-| `ALLOWED_HOSTS` | Only in production | `[]` | Comma-separated, e.g. `example.com,www.example.com` |
-| `TIME_ZONE` | No | `UTC` | IANA name, e.g. `America/New_York` |
-| `TAX_RATE` | No | `0.0` | Decimal, e.g. `0.08` for 8% |
-| `LOW_STOCK_THRESHOLD` | No | `10` | Quantity that triggers the low-stock warning |
+| Variable              | Required           | Default               | Notes                                               |
+| --------------------- | ------------------ | --------------------- | --------------------------------------------------- |
+| `SECRET_KEY`          | Yes                | —                     | Generate your own                                   |
+| `DEBUG`               | No                 | `False`               | Set `True` for local development                    |
+| `DATABASE_URL`        | No                 | SQLite (`db.sqlite3`) | Set to a `postgres://` URL to run against Postgres  |
+| `ALLOWED_HOSTS`       | Only in production | `[]`                  | Comma-separated, e.g. `example.com,www.example.com` |
+| `TIME_ZONE`           | No                 | `UTC`                 | IANA name, e.g. `America/New_York`                  |
+| `TAX_RATE`            | No                 | `0.0`                 | Decimal, e.g. `0.08` for 8%                         |
+| `LOW_STOCK_THRESHOLD` | No                 | `10`                  | Quantity that triggers the low-stock warning        |
 
 Minimum to get running locally on SQLite:
 
@@ -112,7 +112,7 @@ Tests cover the sale creation flow, stock deduction, void/reversal, and the conc
 
 ## What I learned building this
 
-Going in I understood Django's ORM basics. Coming out I have a much clearer picture of where real bugs hide in business logic — specifically the class of bugs that only appear under concurrent load. The oversell problem isn't obvious until you think through the read-modify-write cycle carefully. `select_for_update()` and `F()` expressions both existed in Django before I started; understanding *why* they exist, not just *how* to call them, was the actual lesson.
+Going in I understood Django's ORM basics. Coming out I have a much clearer picture of where real bugs hide in business logic — specifically the class of bugs that only appear under concurrent load. The oversell problem isn't obvious until you think through the read-modify-write cycle carefully. `select_for_update()` and `F()` expressions both existed in Django before I started; understanding _why_ they exist, not just _how_ to call them, was the actual lesson.
 
 The architecture refactor (splitting `core` into focused apps, moving logic into a service layer, separating `Shift` from `ScheduledShift`) reinforced how much easier code is to reason about when each piece has one clear responsibility.
 
