@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+
+{% block title %}Sale #{{ sale.pk }}{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+
+  {# Header #}
+  <div class="flex items-center justify-between mb-6">
+    <div class="flex items-center gap-3">
+      <a href="{% url 'sales:sale-list' %}"
+         class="text-gray-400 hover:text-gray-600 transition-colors">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+      </a>
+      <h1 class="text-xl font-bold text-gray-900">Sale #{{ sale.pk }}</h1>
+      <span class="px-2 py-0.5 rounded-full text-xs font-medium
+        {% if sale.status == 'COMPLETED' %}bg-green-100 text-green-700
+        {% elif sale.status == 'VOIDED' %}bg-red-100 text-red-700
+        {% else %}bg-amber-100 text-amber-700{% endif %}">
+        {{ sale.get_status_display }}
+      </span>
+    </div>
+    {% if user.is_manager_or_above and sale.status == 'COMPLETED' %}
+    <a href="{% url 'sales:sale-void' sale.pk %}"
+       class="border border-red-300 text-red-600 hover:bg-red-50 text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+      Void Sale
+    </a>
+    {% endif %}
+  </div>
+
+  <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+
+    {# Sale metadata #}
+    <div class="px-6 py-4 border-b border-gray-100 grid grid-cols-2 gap-4 text-sm">
+      <div>
+        <span class="text-gray-500">Cashier</span>
+        <p class="font-medium text-gray-900 mt-0.5">{{ sale.cashier.display_name }}</p>
+      </div>
+      <div>
+        <span class="text-gray-500">Date</span>
+        <p class="font-medium text-gray-900 mt-0.5">{{ sale.created_at|date:"M j, Y g:i A" }}</p>
+      </div>
+      <div>
+        <span class="text-gray-500">Payment Method</span>
+        <p class="font-medium text-gray-900 mt-0.5">{{ sale.get_payment_method_display }}</p>
+      </div>
+      {% if sale.amount_tendered %}
+      <div>
+        <span class="text-gray-500">Amount Tendered</span>
+        <p class="font-medium text-gray-900 mt-0.5">${{ sale.amount_tendered }}</p>
+      </div>
+      {% endif %}
+      {% if sale.change_due %}
+      <div>
+        <span class="text-gray-500">Change Due</span>
+        <p class="font-medium text-gray-900 mt-0.5">${{ sale.change_due }}</p>
+      </div>
+      {% endif %}
+      {% if sale.notes %}
+      <div class="col-span-2">
+        <span class="text-gray-500">Notes</span>
+        <p class="font-medium text-gray-900 mt-0.5">{{ sale.notes }}</p>
+      </div>
+      {% endif %}
+    </div>
+
+    {# Line items #}
+    <table class="w-full text-sm">
+      <thead class="bg-gray-50 border-b border-gray-100">
+        <tr>
+          <th class="px-6 py-3 text-left font-semibold text-gray-600">Product</th>
+          <th class="px-6 py-3 text-right font-semibold text-gray-600">Qty</th>
+          <th class="px-6 py-3 text-right font-semibold text-gray-600">Unit Price</th>
+          <th class="px-6 py-3 text-right font-semibold text-gray-600">Total</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {% for item in sale.line_items.all %}
+        <tr>
+          <td class="px-6 py-3 text-gray-900">{{ item.product.name }}</td>
+          <td class="px-6 py-3 text-right text-gray-700">{{ item.quantity }}</td>
+          <td class="px-6 py-3 text-right text-gray-700">${{ item.unit_price }}</td>
+          <td class="px-6 py-3 text-right font-medium">${{ item.line_total }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    {# Totals #}
+    <div class="px-6 py-4 border-t border-gray-200 space-y-2 text-sm">
+      <div class="flex justify-between text-gray-600">
+        <span>Subtotal</span>
+        <span>${{ sale.subtotal }}</span>
+      </div>
+      {% if sale.tax_amount %}
+      <div class="flex justify-between text-gray-600">
+        <span>Tax ({{ sale.tax_rate|floatformat:1 }}%)</span>
+        <span>${{ sale.tax_amount }}</span>
+      </div>
+      {% endif %}
+      <div class="flex justify-between font-bold text-base border-t border-gray-200 pt-2">
+        <span>Total</span>
+        <span class="text-indigo-700">${{ sale.total_amount }}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-4 text-center">
+    <a href="{% url 'sales:pos' %}"
+       class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-6 py-2.5 rounded-lg text-sm transition-colors">
+      New Sale
+    </a>
+  </div>
+</div>
+{% endblock %}

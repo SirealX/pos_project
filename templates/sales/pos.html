@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block title %}POS{% endblock %}
+
+{% block main_class %}p-0 overflow-hidden{% endblock %}
+
+{% block content %}
+<div class="h-full flex overflow-hidden">
+
+  {# ── Left: product grid ──────────────────────────────────────────────── #}
+  <div class="flex-1 flex flex-col overflow-hidden border-r border-gray-200">
+
+    {# Category filter bar #}
+    <div class="shrink-0 bg-white border-b border-gray-200 px-4 py-2 flex items-center gap-2 overflow-x-auto">
+      <button onclick="filterCategory('all')" data-cat="all"
+              class="cat-btn shrink-0 px-3 py-1.5 rounded-full text-xs font-medium bg-indigo-600 text-white transition-colors">
+        All
+      </button>
+      {% for cat in categories %}
+      <button onclick="filterCategory('{{ cat.pk }}')" data-cat="{{ cat.pk }}"
+              class="cat-btn shrink-0 px-3 py-1.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors">
+        {{ cat.name }}
+      </button>
+      {% endfor %}
+    </div>
+
+    {# Product grid #}
+    <div class="flex-1 overflow-y-auto p-4">
+      {% if products %}
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+        {% for product in products %}
+        <div class="product-card" data-category="{{ product.category_id|default:'' }}">
+          <button
+            hx-post="{% url 'sales:cart-add' product.pk %}"
+            hx-target="#cart-panel"
+            hx-swap="outerHTML"
+            hx-vals='{"quantity": "1"}'
+            class="w-full h-24 flex flex-col items-center justify-center gap-1 bg-white border border-gray-200 rounded-xl p-3 hover:border-indigo-400 hover:shadow-sm active:bg-indigo-50 transition-all text-left">
+            {% if product.image %}
+            <img src="{{ product.image.url }}" alt="{{ product.name }}"
+                 class="w-8 h-8 rounded object-cover">
+            {% endif %}
+            <span class="text-xs font-semibold text-gray-800 text-center leading-tight line-clamp-2">
+              {{ product.name }}
+            </span>
+            <span class="text-sm font-bold text-indigo-600">${{ product.price }}</span>
+            {% if product.is_low_stock %}
+            <span class="text-xs text-amber-600 font-medium">Low stock</span>
+            {% endif %}
+          </button>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="flex items-center justify-center h-full text-gray-400 text-sm">
+        No products in stock.
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  {# ── Right: cart panel ───────────────────────────────────────────────── #}
+  {% include 'sales/partials/cart_panel.html' %}
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  function filterCategory(categoryId) {
+    document.querySelectorAll('.product-card').forEach(card => {
+      const show = categoryId === 'all' || card.dataset.category === categoryId;
+      card.style.display = show ? '' : 'none';
+    });
+    document.querySelectorAll('.cat-btn').forEach(btn => {
+      const active = btn.dataset.cat === categoryId;
+      btn.classList.toggle('bg-indigo-600', active);
+      btn.classList.toggle('text-white', active);
+      btn.classList.toggle('bg-gray-100', !active);
+      btn.classList.toggle('text-gray-700', !active);
+    });
+  }
+</script>
+{% endblock %}

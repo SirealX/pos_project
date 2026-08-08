@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Sign In{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-center py-16">
+  <div class="w-full max-w-sm">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 px-8 py-10">
+      <h1 class="text-xl font-bold text-gray-900 text-center mb-1">ProPOS</h1>
+      <p class="text-sm text-gray-500 text-center mb-8">Sign in to your account</p>
+
+      <form method="post">
+        {% csrf_token %}
+        {{ form|crispy }}
+        <button type="submit"
+                class="w-full mt-4 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 rounded-lg text-sm transition-colors">
+          Sign In
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

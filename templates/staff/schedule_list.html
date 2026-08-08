@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block title %}Schedule{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+  <h1 class="text-xl font-bold text-gray-900">Upcoming Schedule</h1>
+  {% if user.is_manager_or_above %}
+  <a href="{% url 'staff:schedule-create' %}"
+     class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+    + Add Shift
+  </a>
+  {% endif %}
+</div>
+
+<div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+  <table class="w-full text-sm">
+    <thead class="bg-gray-50 border-b border-gray-200">
+      <tr>
+        <th class="px-4 py-3 text-left font-semibold text-gray-600">Employee</th>
+        <th class="px-4 py-3 text-left font-semibold text-gray-600">Date</th>
+        <th class="px-4 py-3 text-left font-semibold text-gray-600">Start</th>
+        <th class="px-4 py-3 text-left font-semibold text-gray-600">End</th>
+        <th class="px-4 py-3 text-left font-semibold text-gray-600">Notes</th>
+        {% if user.is_manager_or_above %}
+        <th class="px-4 py-3"></th>
+        {% endif %}
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-gray-100">
+      {% for entry in scheduled_shifts %}
+      <tr class="hover:bg-gray-50">
+        <td class="px-4 py-3 font-medium text-gray-900">{{ entry.employee.display_name }}</td>
+        <td class="px-4 py-3 text-gray-700">{{ entry.scheduled_date|date:"D, M j" }}</td>
+        <td class="px-4 py-3 text-gray-700">{{ entry.start_time|time:"g:i A" }}</td>
+        <td class="px-4 py-3 text-gray-700">{{ entry.end_time|time:"g:i A" }}</td>
+        <td class="px-4 py-3 text-gray-500">{{ entry.notes|default:"—" }}</td>
+        {% if user.is_manager_or_above %}
+        <td class="px-4 py-3 text-right whitespace-nowrap">
+          <a href="{% url 'staff:schedule-update' entry.pk %}"
+             class="text-indigo-600 hover:text-indigo-800 font-medium mr-3">Edit</a>
+          <a href="{% url 'staff:schedule-delete' entry.pk %}"
+             class="text-red-500 hover:text-red-700 font-medium">Delete</a>
+        </td>
+        {% endif %}
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="6" class="px-4 py-10 text-center text-gray-400 text-sm">
+          No upcoming shifts scheduled.
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+
+{% block title %}Products{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+  <div>
+    <h1 class="text-xl font-bold text-gray-900">Products</h1>
+    {% if low_stock_count %}
+    <p class="text-sm text-amber-600 font-medium mt-0.5">
+      {{ low_stock_count }} item{{ low_stock_count|pluralize }} low on stock
+    </p>
+    {% endif %}
+  </div>
+  {% if user.is_manager_or_above %}
+  <a href="{% url 'inventory:product-create' %}"
+     class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+    + Add Product
+  </a>
+  {% endif %}
+</div>
+
+{# Search + filter #}
+<form method="get" class="flex gap-3 mb-5">
+  <input type="text" name="q" value="{{ query }}" placeholder="Search products…"
+         class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400">
+  <select name="category"
+          class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400">
+    <option value="">All categories</option>
+    {% for cat in categories %}
+    <option value="{{ cat.pk }}" {% if selected_category == cat.pk|stringformat:"s" %}selected{% endif %}>
+      {{ cat.name }}
+    </option>
+    {% endfor %}
+  </select>
+  <button type="submit"
+          class="bg-gray-800 hover:bg-gray-900 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+    Search
+  </button>
+  {% if query or selected_category %}
+  <a href="{% url 'inventory:product-list' %}"
+     class="border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+    Clear
+  </a>
+  {% endif %}
+</form>
+
+<div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+  <table class="w-full text-sm">
+    <thead class="bg-gray-50 border-b border-gray-200">
+      <tr>
+        <th class="px-4 py-3 text-left font-semibold text-gray-600">Name</th>
+        <th class="px-4 py-3 text-left font-semibold text-gray-600">SKU</th>
+        <th class="px-4 py-3 text-left font-semibold text-gray-600">Category</th>
+        <th class="px-4 py-3 text-right font-semibold text-gray-600">Price</th>
+        <th class="px-4 py-3 text-right font-semibold text-gray-600">Stock</th>
+        {% if user.is_manager_or_above %}
+        <th class="px-4 py-3 text-right font-semibold text-gray-600">Margin</th>
+        <th class="px-4 py-3"></th>
+        {% endif %}
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-gray-100">
+      {% for product in products %}
+      <tr class="hover:bg-gray-50">
+        <td class="px-4 py-3 font-medium text-gray-900">{{ product.name }}</td>
+        <td class="px-4 py-3 text-gray-500 font-mono text-xs">{{ product.sku }}</td>
+        <td class="px-4 py-3 text-gray-600">{{ product.category.name|default:"—" }}</td>
+        <td class="px-4 py-3 text-right font-semibold">${{ product.price }}</td>
+        <td class="px-4 py-3 text-right">
+          <span class="{% if product.is_out_of_stock %}text-red-600 font-semibold
+                       {% elif product.is_low_stock %}text-amber-600 font-semibold
+                       {% else %}text-gray-700{% endif %}">
+            {{ product.stock_quantity }}
+          </span>
+        </td>
+        {% if user.is_manager_or_above %}
+        <td class="px-4 py-3 text-right text-gray-500">{{ product.gross_margin }}%</td>
+        <td class="px-4 py-3 text-right whitespace-nowrap">
+          <a href="{% url 'inventory:product-update' product.pk %}"
+             class="text-indigo-600 hover:text-indigo-800 font-medium mr-3">Edit</a>
+          <a href="{% url 'inventory:product-delete' product.pk %}"
+             class="text-red-500 hover:text-red-700 font-medium">Delete</a>
+        </td>
+        {% endif %}
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="7" class="px-4 py-10 text-center text-gray-400 text-sm">
+          No products found.
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if is_paginated %}
+<div class="flex items-center justify-between mt-4 text-sm">
+  <span class="text-gray-500">
+    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+  </span>
+  <div class="flex gap-2">
+    {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}"
+       class="px-3 py-1.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+      Previous
+    </a>
+    {% endif %}
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}"
+       class="px-3 py-1.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+      Next
+    </a>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}

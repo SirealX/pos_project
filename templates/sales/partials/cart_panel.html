@@ -1,0 +1,153 @@
+<div id="cart-panel" class="w-80 xl:w-96 flex flex-col bg-white overflow-hidden shrink-0">
+
+  {# Header #}
+  <div class="shrink-0 px-4 py-3 border-b border-gray-200 flex items-center justify-between">
+    <h2 class="font-semibold text-gray-900">Cart</h2>
+    {% if cart_items %}
+    <span class="text-xs bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-medium">
+      {{ cart_items|length }} item{{ cart_items|length|pluralize }}
+    </span>
+    {% endif %}
+  </div>
+
+  {# Cart items — scrollable #}
+  <div class="flex-1 overflow-y-auto">
+    {% if cart_items %}
+    <ul class="divide-y divide-gray-100">
+      {% for item in cart_items %}
+      <li class="px-4 py-3 flex items-center gap-3">
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-medium text-gray-900 truncate">{{ item.product.name }}</p>
+          <p class="text-xs text-gray-500">${{ item.unit_price }} each</p>
+        </div>
+
+        {# Quantity input — HTMX on change #}
+        <input type="number"
+               name="quantity"
+               value="{{ item.quantity }}"
+               min="0" max="9999"
+               hx-post="{% url 'sales:cart-set-quantity' item.product.pk %}"
+               hx-target="#cart-panel"
+               hx-swap="outerHTML"
+               hx-trigger="change"
+               class="w-14 text-center border border-gray-300 rounded px-1 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-indigo-400">
+
+        <span class="text-sm font-semibold text-gray-800 w-16 text-right shrink-0">
+          ${{ item.line_total }}
+        </span>
+
+        {# Remove button #}
+        <button hx-post="{% url 'sales:cart-remove' item.product.pk %}"
+                hx-target="#cart-panel"
+                hx-swap="outerHTML"
+                class="text-gray-300 hover:text-red-500 transition-colors shrink-0"
+                title="Remove">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <div class="flex flex-col items-center justify-center h-32 text-gray-400 text-sm gap-2">
+      <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+              d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.3 2.3a1 1 0 00.7 1.7H17M17 13v4a2 2 0 01-2 2H9a2 2 0 01-2-2v-4"/>
+      </svg>
+      <span>Cart is empty</span>
+    </div>
+    {% endif %}
+  </div>
+
+  {# Totals + checkout form #}
+  <div class="shrink-0 border-t border-gray-200 bg-gray-50 px-4 py-4 space-y-4">
+
+    {# Subtotal #}
+    <div class="flex justify-between text-sm">
+      <span class="text-gray-600">Subtotal</span>
+      <span class="font-semibold text-gray-900">${{ cart.subtotal }}</span>
+    </div>
+    <div class="flex justify-between text-base font-bold border-t border-gray-200 pt-2">
+      <span>Total</span>
+      <span class="text-indigo-700">${{ cart.subtotal }}</span>
+    </div>
+
+    {# Checkout form #}
+    <form method="post" action="{% url 'sales:checkout' %}" id="checkout-form">
+      {% csrf_token %}
+
+      {# Payment method #}
+      <div class="mb-3">
+        <label class="block text-xs font-medium text-gray-700 mb-1.5">Payment Method</label>
+        <div class="flex gap-2">
+          {% for value, label in form.payment_method.field.choices %}
+          <label class="flex-1 cursor-pointer">
+            <input type="radio" name="payment_method" value="{{ value }}"
+                   {% if form.payment_method.value == value or forloop.first and not form.payment_method.value %}checked{% endif %}
+                   onchange="toggleTendered(this.value)"
+                   class="sr-only peer">
+            <span class="block text-center py-1.5 text-xs font-medium border rounded-lg
+                         peer-checked:bg-indigo-600 peer-checked:text-white peer-checked:border-indigo-600
+                         border-gray-300 text-gray-700 hover:border-indigo-400 transition-colors">
+              {{ label }}
+            </span>
+          </label>
+          {% endfor %}
+        </div>
+        {% if form.payment_method.errors %}
+        <p class="text-red-600 text-xs mt-1">{{ form.payment_method.errors|first }}</p>
+        {% endif %}
+      </div>
+
+      {# Amount tendered — shown only for CASH #}
+      <div id="tendered-row" class="mb-3">
+        <label for="id_amount_tendered" class="block text-xs font-medium text-gray-700 mb-1">
+          Amount Tendered
+        </label>
+        <input type="number" id="id_amount_tendered" name="amount_tendered"
+               value="{{ form.amount_tendered.value|default:'' }}"
+               min="0.01" step="0.01"
+               placeholder="0.00"
+               class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400
+               {% if form.amount_tendered.errors %}border-red-400{% endif %}">
+        {% if form.amount_tendered.errors %}
+        <p class="text-red-600 text-xs mt-1">{{ form.amount_tendered.errors|first }}</p>
+        {% endif %}
+      </div>
+
+      {# Notes #}
+      <div class="mb-3">
+        <label for="id_notes" class="block text-xs font-medium text-gray-700 mb-1">
+          Notes <span class="text-gray-400 font-normal">(optional)</span>
+        </label>
+        <textarea id="id_notes" name="notes" rows="2"
+                  class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none">{{ form.notes.value|default:'' }}</textarea>
+      </div>
+
+      {% if cart_items %}
+      <button type="submit"
+              class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-lg text-sm transition-colors">
+        Complete Sale
+      </button>
+      {% else %}
+      <button type="button" disabled
+              class="w-full bg-gray-200 text-gray-400 font-semibold py-3 rounded-lg text-sm cursor-not-allowed">
+        Complete Sale
+      </button>
+      {% endif %}
+    </form>
+  </div>
+</div>
+
+<script>
+  function toggleTendered(method) {
+    document.getElementById('tendered-row').style.display = method === 'CASH' ? '' : 'none';
+  }
+  // Run on initial load
+  (function () {
+    const checked = document.querySelector('input[name="payment_method"]:checked');
+    if (checked) toggleTendered(checked.value);
+  })();
+</script>

@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+
+{% block title %}Sales Report{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+  <div class="flex items-center gap-3">
+    <a href="{% url 'reports:dashboard' %}"
+       class="text-gray-400 hover:text-gray-600 transition-colors">
+      <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+      </svg>
+    </a>
+    <h1 class="text-xl font-bold text-gray-900">Sales Report</h1>
+  </div>
+  <a href="{% url 'reports:sales-report-csv' %}?start={{ start }}&end={{ end }}&group_by={{ group_by }}"
+     class="border border-gray-300 text-gray-700 hover:bg-gray-50 text-sm font-medium px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
+    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+    </svg>
+    Export CSV
+  </a>
+</div>
+
+{# Filter form #}
+<form method="get" class="bg-white rounded-xl border border-gray-200 p-4 mb-6 flex flex-wrap gap-4 items-end">
+  <div>
+    <label class="block text-xs font-medium text-gray-600 mb-1">From</label>
+    <input type="date" name="start" value="{{ start }}"
+           class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400">
+  </div>
+  <div>
+    <label class="block text-xs font-medium text-gray-600 mb-1">To</label>
+    <input type="date" name="end" value="{{ end }}"
+           class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400">
+  </div>
+  <div>
+    <label class="block text-xs font-medium text-gray-600 mb-1">Group by</label>
+    <select name="group_by"
+            class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400">
+      <option value="day"   {% if group_by == 'day'   %}selected{% endif %}>Day</option>
+      <option value="week"  {% if group_by == 'week'  %}selected{% endif %}>Week</option>
+      <option value="month" {% if group_by == 'month' %}selected{% endif %}>Month</option>
+    </select>
+  </div>
+  <button type="submit"
+          class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-5 py-2 rounded-lg transition-colors">
+    Apply
+  </button>
+</form>
+
+{# Summary cards #}
+<div class="grid grid-cols-3 gap-4 mb-6">
+  <div class="bg-white rounded-xl border border-gray-200 p-4 text-center">
+    <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Transactions</p>
+    <p class="text-2xl font-bold text-gray-900">{{ totals.total_count|default:"0" }}</p>
+  </div>
+  <div class="bg-white rounded-xl border border-gray-200 p-4 text-center">
+    <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Total Revenue</p>
+    <p class="text-2xl font-bold text-indigo-600">${{ totals.total_revenue|floatformat:2|default:"0.00" }}</p>
+  </div>
+  <div class="bg-white rounded-xl border border-gray-200 p-4 text-center">
+    <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Avg Sale</p>
+    <p class="text-2xl font-bold text-gray-900">${{ totals.avg_sale|floatformat:2|default:"0.00" }}</p>
+  </div>
+</div>
+
+{# Aggregated table #}
+<div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+  <table class="w-full text-sm">
+    <thead class="bg-gray-50 border-b border-gray-200">
+      <tr>
+        <th class="px-4 py-3 text-left font-semibold text-gray-600">Period</th>
+        <th class="px-4 py-3 text-right font-semibold text-gray-600">Transactions</th>
+        <th class="px-4 py-3 text-right font-semibold text-gray-600">Revenue</th>
+        <th class="px-4 py-3 text-right font-semibold text-gray-600">Avg Sale</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-gray-100">
+      {% for row in rows %}
+      <tr class="hover:bg-gray-50">
+        <td class="px-4 py-3 font-medium text-gray-900">
+          {% if group_by == 'month' %}
+            {{ row.period|date:"F Y" }}
+          {% elif group_by == 'week' %}
+            Week of {{ row.period|date:"M j, Y" }}
+          {% else %}
+            {{ row.period|date:"D, M j, Y" }}
+          {% endif %}
+        </td>
+        <td class="px-4 py-3 text-right text-gray-700">{{ row.count }}</td>
+        <td class="px-4 py-3 text-right font-semibold">${{ row.revenue|floatformat:2 }}</td>
+        <td class="px-4 py-3 text-right text-gray-600">${{ row.avg_sale|floatformat:2 }}</td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="4" class="px-4 py-10 text-center text-gray-400 text-sm">
+          No sales in this period.
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+    {% if totals.total_count %}
+    <tfoot class="border-t-2 border-gray-200 bg-gray-50 font-semibold">
+      <tr>
+        <td class="px-4 py-3 text-gray-700">Total</td>
+        <td class="px-4 py-3 text-right text-gray-900">{{ totals.total_count }}</td>
+        <td class="px-4 py-3 text-right text-indigo-700">${{ totals.total_revenue|floatformat:2 }}</td>
+        <td class="px-4 py-3 text-right text-gray-700">${{ totals.avg_sale|floatformat:2 }}</td>
+      </tr>
+    </tfoot>
+    {% endif %}
+  </table>
+</div>
+{% endblock %}

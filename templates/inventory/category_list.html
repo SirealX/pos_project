@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block title %}Categories{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+  <h1 class="text-xl font-bold text-gray-900">Categories</h1>
+  <a href="{% url 'inventory:category-create' %}"
+     class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+    + Add Category
+  </a>
+</div>
+
+<div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+  <table class="w-full text-sm">
+    <thead class="bg-gray-50 border-b border-gray-200">
+      <tr>
+        <th class="px-4 py-3 text-left font-semibold text-gray-600">Name</th>
+        <th class="px-4 py-3 text-left font-semibold text-gray-600">Description</th>
+        <th class="px-4 py-3"></th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-gray-100">
+      {% for category in categories %}
+      <tr class="hover:bg-gray-50">
+        <td class="px-4 py-3 font-medium text-gray-900">{{ category.name }}</td>
+        <td class="px-4 py-3 text-gray-500">{{ category.description|default:"—" }}</td>
+        <td class="px-4 py-3 text-right">
+          <a href="{% url 'inventory:category-update' category.pk %}"
+             class="text-indigo-600 hover:text-indigo-800 font-medium">Edit</a>
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="3" class="px-4 py-10 text-center text-gray-400 text-sm">
+          No categories yet.
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
