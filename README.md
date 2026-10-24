@@ -63,8 +63,8 @@ Role lives directly on `User` rather than a separate `Employee` profile table. P
 ## Setup
 
 ```bash
-git clone https://github.com/SirealX/pos-system
-cd pos-system
+git clone https://github.com/SirealX/pos_project
+cd pos_project
 python -m venv venv && source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements/local.txt  # use requirements/production.txt for deployment
 
@@ -120,4 +120,6 @@ The architecture refactor (splitting `core` into focused apps, moving logic into
 
 ## Status
 
-Currently runs on SQLite locally. Deployment and a proper frontend are the next steps before this is fully portfolio-ready. The data model and backend logic are solid — the gaps are presentation, not substance.
+**Complete (2023 – 2026).** Built as a self-directed learning project and finished in August 2026 after a security-hardening and environment-config pass with the full test suite passing.
+
+It runs on SQLite by default and on PostgreSQL by setting `DATABASE_URL`. It is not deployed publicly; the UI is a server-rendered Django + HTMX interface rather than a separate frontend.
